@@ -9,20 +9,37 @@
 const int volumeUpID = 0x12345678;
 const int volumeDownID = 0x12345679;
 const int volumeMuteID = 0x12345670;
+const int mediaNextID = 0x12345671;
+const int mediaPreviousID = 0x12345672;
+const int mediaPlayPauseID = 0x12345673;
 
-void ShowErrorAndExit(DWORD dwErrorCode)
-{
-    TCHAR msgBuff[500];
-    FormatMessage(
-        FORMAT_MESSAGE_FROM_SYSTEM,
-        nullptr,
-        dwErrorCode,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        msgBuff,
-        500,
-        nullptr);
-    MessageBox(nullptr, msgBuff, _T("AdjustVolume"), 0);
-    exit(0);
+#define ShowErrorAndExit(dwErrorCode)                       \
+{                                                           \
+    TCHAR msgBuff[500];                                     \
+    FormatMessage(                                          \
+        FORMAT_MESSAGE_FROM_SYSTEM,                         \
+        nullptr,                                            \
+        dwErrorCode,                                        \
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),          \
+        msgBuff,                                            \
+        500,                                                \
+        nullptr);                                           \
+    MessageBox(nullptr, msgBuff, _T("AdjustVolume"), 0);    \
+    exit(0);                                                \
+}
+
+
+#define PressKey(bVk)                                       \
+{                                                           \
+    keybd_event(bVk,                                        \
+        MapVirtualKey(bVk, 0),                              \
+        KEYEVENTF_EXTENDEDKEY,                              \
+        0);                                                 \
+                                                            \
+    keybd_event(bVk,                                        \
+        MapVirtualKey(bVk, 0),                              \
+        KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP,            \
+        0);                                                 \
 }
 
 int main(void)
@@ -35,6 +52,7 @@ int main(void)
     {
         ShowErrorAndExit(GetLastError());
     }
+
     if (!RegisterHotKey(nullptr,
         volumeDownID,
         MOD_CONTROL | MOD_SHIFT,
@@ -42,10 +60,35 @@ int main(void)
     {
         ShowErrorAndExit(GetLastError());
     }
+
     if (!RegisterHotKey(nullptr,
         volumeDownID,
         MOD_CONTROL | MOD_SHIFT,
         '0'))
+    {
+        ShowErrorAndExit(GetLastError());
+    }
+
+    if (!RegisterHotKey(nullptr,
+        mediaNextID,
+        MOD_CONTROL | MOD_SHIFT,
+        VK_OEM_PERIOD))
+    {
+        ShowErrorAndExit(GetLastError());
+    }
+
+    if (!RegisterHotKey(nullptr,
+        mediaPreviousID,
+        MOD_CONTROL | MOD_SHIFT,
+        VK_OEM_COMMA))
+    {
+        ShowErrorAndExit(GetLastError());
+    }
+
+    if (!RegisterHotKey(nullptr,
+        mediaPlayPauseID,
+        MOD_CONTROL | MOD_SHIFT,
+        VK_OEM_2))
     {
         ShowErrorAndExit(GetLastError());
     }
@@ -61,37 +104,25 @@ int main(void)
             switch (msg.wParam)
             {
             case volumeUpID:
-                keybd_event(VK_VOLUME_UP,
-                    MapVirtualKey(VK_VOLUME_UP, 0),
-                    KEYEVENTF_EXTENDEDKEY,
-                    0);
-
-                keybd_event(VK_VOLUME_UP,
-                    MapVirtualKey(VK_VOLUME_UP, 0),
-                    KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP,
-                    0);
+                PressKey(VK_VOLUME_UP);
                 break;
             case volumeDownID:
-                keybd_event(VK_VOLUME_DOWN,
-                    MapVirtualKey(VK_VOLUME_DOWN, 0),
-                    KEYEVENTF_EXTENDEDKEY,
-                    0);
-
-                keybd_event(VK_VOLUME_DOWN,
-                    MapVirtualKey(VK_VOLUME_DOWN, 0),
-                    KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP,
-                    0);
+                PressKey(VK_VOLUME_DOWN);
                 break;
             case volumeMuteID:
-                keybd_event(VK_VOLUME_MUTE,
-                    MapVirtualKey(VK_VOLUME_MUTE, 0),
-                    KEYEVENTF_EXTENDEDKEY,
-                    0);
-
-                keybd_event(VK_VOLUME_MUTE,
-                    MapVirtualKey(VK_VOLUME_MUTE, 0),
-                    KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP,
-                    0);
+                PressKey(VK_VOLUME_MUTE);
+                break;
+            case mediaNextID:
+                Sleep(300);
+                PressKey(VK_MEDIA_NEXT_TRACK);
+                break;
+            case mediaPreviousID:
+                Sleep(300);
+                PressKey(VK_MEDIA_PREV_TRACK);
+                break;
+            case mediaPlayPauseID:
+                Sleep(300);
+                PressKey(VK_MEDIA_PLAY_PAUSE);
                 break;
             default:
                 break;
