@@ -3,15 +3,22 @@
 
 #include <Windows.h>
 #include <tchar.h>
+#include <cpr/cpr.h>
 
 #pragma comment( linker, "/subsystem:\"windows\" /entry:\"mainCRTStartup\"" ) 
 
-const int volumeUpID = 0x12345678;
-const int volumeDownID = 0x12345679;
-const int volumeMuteID = 0x12345670;
-const int mediaNextID = 0x12345671;
-const int mediaPreviousID = 0x12345672;
-const int mediaPlayPauseID = 0x12345673;
+enum MyEnum
+{
+    volumeUpID = 0x12345678,
+    volumeDownID,
+    volumeMuteID,
+    mediaNextID,
+    mediaPreviousID,
+    mediaPlayPauseID,
+    startEverytingID,
+    keepLoginID,
+};
+
 
 #define ShowErrorAndExit(dwErrorCode)                       \
 {                                                           \
@@ -93,6 +100,14 @@ int main(void)
         ShowErrorAndExit(GetLastError());
     }
 
+    if (!RegisterHotKey(nullptr,
+        startEverytingID,
+        MOD_CONTROL | MOD_SHIFT,
+        VK_NUMPAD0))
+    {
+        ShowErrorAndExit(GetLastError());
+    }
+
     MSG msg;
 
     // Main message loop:
@@ -124,6 +139,29 @@ int main(void)
                 Sleep(300);
                 PressKey(VK_MEDIA_PLAY_PAUSE);
                 break;
+            case startEverytingID:
+            {
+                SHELLEXECUTEINFO shExInfo = { 0 };
+                shExInfo.cbSize = sizeof(shExInfo);
+                shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+                shExInfo.hwnd = 0;
+                shExInfo.lpVerb = _T("runas");
+                shExInfo.lpFile = _T(""); //Everything Path
+                shExInfo.lpParameters = _T("");
+                shExInfo.lpDirectory = 0;
+                shExInfo.nShow = SW_SHOW;
+                shExInfo.hInstApp = 0;
+
+                if (ShellExecuteEx(&shExInfo))
+                {
+                    WaitForSingleObject(shExInfo.hProcess, INFINITE);
+                    CloseHandle(shExInfo.hProcess);
+                }
+                else
+                {
+                    ShowErrorAndExit(GetLastError());
+                }
+            }
             default:
                 break;
             }
